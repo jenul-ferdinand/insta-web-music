@@ -36,23 +36,33 @@
   }
 
   const audio = new Audio();
+  let blocked = false; // Firefox refuses sound until the page has been clicked once
 
   function play() {
-    audio.play().catch(err => {
-      if (err.name !== 'AbortError') console.warn('InstaWebMusic:', err); // AbortError: switched songs mid-start
-    });
+    audio.play().then(
+      () => (blocked = false),
+      err => {
+        blocked = err.name === 'NotAllowedError';
+        if (!blocked && err.name !== 'AbortError') console.warn('InstaWebMusic:', err); // AbortError: switched songs mid-start
+      },
+    );
   }
 
   let current = null; // open post, or null when none is open
+  let nowPlaying = null; // { code, song } loaded into `audio`
 
   async function tick() {
     const code = codeOf(location);
-    if (code === current) return;
+    if (code === current) {
+      if (blocked && nowPlaying?.code === code) play(); // retry once Firefox allows sound
+      return;
+    }
     current = code;
     audio.pause();
     if (!code) return;
     const song = await lookup(code);
     if (current !== code || !song) return;
+    nowPlaying = { code, song };
     audio.src = song.src;
     play();
   }

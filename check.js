@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const vm = require('node:vm');
 
 let tick, player, reply, requested;
+let autoplayBlocked = false;
 
 globalThis.location = { pathname: '/' };
 globalThis.setInterval = fn => (tick = fn);
@@ -14,6 +15,7 @@ globalThis.Audio = class {
   paused = true;
   constructor() { player = this; }
   async play() {
+    if (autoplayBlocked) throw new DOMException('no click yet', 'NotAllowedError');
     this.paused = false;
   }
   pause() { this.paused = true; }
@@ -52,6 +54,16 @@ const open = async path => {
   await slow;
   assert.equal(player.paused, true);
   globalThis.fetch = fetchNow;
+
+  // Firefox blocks sound until the page has been clicked; the next tick after that starts it.
+  autoplayBlocked = true;
+  reply = post(full, {});
+  await open('/p/NoClickYet1/');
+  assert.equal(player.paused, true);
+  autoplayBlocked = false;
+  await tick();
+  assert.equal(player.paused, false);
+  await open('/');
 
   console.log('ok');
 })();
