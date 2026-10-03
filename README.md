@@ -88,3 +88,7 @@ Pull requests welcome. Run `node check.js` before you open one.
 ## Disclaimer
 
 InstaWebMusic is an independent project. Instagram and Meta don't endorse, sponsor or have any affiliation with it. Instagram is a trademark of Meta Platforms, Inc.
+
+## License
+
+InstaWebMusic uses the MIT License. See the [LICENSE](LICENSE) file for details.
