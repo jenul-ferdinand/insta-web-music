@@ -5,6 +5,24 @@ const vm = require('node:vm');
 let tick, player, reply, requested;
 let autoplayBlocked = false;
 
+// The open post: a popup whose header has the poster's picture next to a name column, plus a date link.
+const placed = []; // [where, label] for every label the script inserted
+const live = () => placed.map(([, el]) => el).filter(el => !el.removed);
+const header = { querySelector: selector => (selector === 'img' ? {} : null) }; // holds the profile picture
+const column = { parentElement: header, querySelector: () => null, append: el => placed.push(['header', el]) };
+const name = { parentElement: { parentElement: column, querySelector: () => null } };
+const date = { pathname: '', closest: () => popup, after: el => placed.push(['date', el]) };
+const popup = {
+  querySelector: selector =>
+    selector === '.insta-web-music' ? live()[0] ?? null
+    : selector === 'a[href="/poster/"]:not(:has(img))' ? name
+    : null,
+};
+globalThis.document = {
+  querySelector: () => null,
+  querySelectorAll: selector => (selector === 'a[href*="/p/"] time' ? [{ closest: () => date }] : live()),
+  createElement: () => ({ style: {}, dataset: {}, remove() { this.removed = true; } }),
+};
 globalThis.location = { pathname: '/' };
 globalThis.setInterval = fn => (tick = fn);
 globalThis.fetch = async url => {
@@ -13,6 +31,7 @@ globalThis.fetch = async url => {
 };
 globalThis.Audio = class {
   paused = true;
+  muted = false;
   constructor() { player = this; }
   async play() {
     if (autoplayBlocked) throw new DOMException('no click yet', 'NotAllowedError');
@@ -22,8 +41,11 @@ globalThis.Audio = class {
 };
 vm.runInThisContext(require('node:fs').readFileSync(`${__dirname}/music.js`, 'utf8'));
 
-const post = (asset, consumption) => ({
-  items: [{ music_metadata: { music_info: { music_asset_info: asset, music_consumption_info: consumption } } }],
+const post = (asset, consumption, username = 'poster') => ({
+  items: [{
+    user: { username },
+    music_metadata: { music_info: { music_asset_info: asset, music_consumption_info: consumption } },
+  }],
 });
 const asset = { title: 'Song', display_artist: 'Artist', web_30s_preview_download_url: 'https://cdn/30s.m4a' };
 const full = { ...asset, progressive_download_url: 'https://cdn/full.m4a' };
@@ -63,6 +85,29 @@ const open = async path => {
   autoplayBlocked = false;
   await tick();
   assert.equal(player.paused, false);
+  await open('/');
+
+  // The song shows under the poster's name, mutes on click, survives re-renders and leaves with the post.
+  reply = post(full, {});
+  date.pathname = '/p/WithLabel01/';
+  await open('/p/WithLabel01/');
+  assert.deepEqual(placed.map(([where]) => where), ['header']);
+  assert.equal(live()[0].textContent, '♫ Song · Artist');
+  live()[0].onclick();
+  assert.equal(player.muted, true);
+  assert.equal(live()[0].textContent, '🔇 Song · Artist');
+  live()[0].onclick();
+  live()[0].removed = true; // Instagram re-rendered the header
+  await tick();
+  assert.equal(live().length, 1);
+  await open('/');
+  assert.equal(live().length, 0);
+
+  // If the poster's name isn't on the page, the song shows after the date instead.
+  reply = post(full, {}, 'stranger');
+  date.pathname = '/p/NoNameFound/';
+  await open('/p/NoNameFound/');
+  assert.equal(placed.at(-1)[0], 'date');
   await open('/');
 
   console.log('ok');
