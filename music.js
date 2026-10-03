@@ -16,7 +16,7 @@
     const data = await res.json();
     const music = data.items?.[0]?.music_metadata?.music_info;
     const asset = music?.music_asset_info;
-    if (!asset) return null;
+    if (!asset || music.music_consumption_info?.should_mute_audio) return null;
     const full = https(asset.progressive_download_url);
     const src = full ?? https(asset.web_30s_preview_download_url);
     if (!src) return null;

@@ -126,5 +126,10 @@ const open = async path => {
   assert.equal(player.src, 'https://cdn/30s.m4a#t=0');
   await open('/');
 
+  // Songs Instagram mutes never play.
+  reply = post(full, { should_mute_audio: true });
+  await open('/p/MutedSong01/');
+  assert.equal(player.paused, true);
+
   console.log('ok');
 })();
