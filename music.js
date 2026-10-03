@@ -17,10 +17,11 @@
     const music = data.items?.[0]?.music_metadata?.music_info;
     const asset = music?.music_asset_info;
     if (!asset) return null;
-    const src = https(asset.progressive_download_url);
+    const full = https(asset.progressive_download_url);
+    const src = full ?? https(asset.web_30s_preview_download_url);
     if (!src) return null;
-    // Start where the poster's clip starts.
-    const start = (music.music_consumption_info?.audio_asset_start_time_in_ms ?? 0) / 1000;
+    // The full track starts where the poster's clip starts; the 30s preview is already a clip.
+    const start = full ? (music.music_consumption_info?.audio_asset_start_time_in_ms ?? 0) / 1000 : 0;
     return {
       src: `${src}#t=${start}`,
       title: `${asset.title} · ${asset.display_artist}`,

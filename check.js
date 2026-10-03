@@ -120,5 +120,11 @@ const open = async path => {
   document.hidden = false;
   await open('/');
 
+  // A broken full-track URL falls back to the 30s preview, which is already a clip.
+  reply = post({ ...asset, progressive_download_url: ':' }, { audio_asset_start_time_in_ms: 45000 });
+  await open('/p/PreviewOnly/');
+  assert.equal(player.src, 'https://cdn/30s.m4a#t=0');
+  await open('/');
+
   console.log('ok');
 })();
