@@ -3,6 +3,11 @@
   "name": "InstaWebMusic",
   "version": "0.1.0",
   "description": "Hear the music on Instagram photo posts in your browser, not just the app.",
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg",
+    "128": "icon.png"
+  },
   "content_scripts": [
     {
       "matches": ["https://www.instagram.com/*"],
