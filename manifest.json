@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "InstaWebMusic",
+  "version": "0.1.0",
+  "description": "Hear the music on Instagram photo posts in your browser, not just the app.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.instagram.com/*"],
+      "js": ["music.js"],
+      "world": "MAIN"
+    }
+  ]
+}
