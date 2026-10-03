@@ -87,11 +87,11 @@
     else date.after(btn); // header not found
   }
 
-  let current = null; // open post, or null when none is open
+  let current = null; // open post, or null when none is open or the tab is hidden
   let nowPlaying = null; // { code, song } loaded into `audio`
 
   async function tick() {
-    const code = codeOf(location);
+    const code = document.hidden ? null : codeOf(location);
     if (code === current) {
       if (code && nowPlaying?.code === code) {
         label(code, nowPlaying.song); // Instagram can render the header late or re-render it

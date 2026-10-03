@@ -19,6 +19,7 @@ const popup = {
     : null,
 };
 globalThis.document = {
+  hidden: false,
   querySelector: () => null,
   querySelectorAll: selector => (selector === 'a[href*="/p/"] time' ? [{ closest: () => date }] : live()),
   createElement: () => ({ style: {}, dataset: {}, remove() { this.removed = true; } }),
@@ -108,6 +109,15 @@ const open = async path => {
   date.pathname = '/p/NoNameFound/';
   await open('/p/NoNameFound/');
   assert.equal(placed.at(-1)[0], 'date');
+  await open('/');
+
+  // Switching tabs pauses the song.
+  reply = post(full, {});
+  await open('/p/HiddenTab01/');
+  document.hidden = true;
+  await tick();
+  assert.equal(player.paused, true);
+  document.hidden = false;
   await open('/');
 
   console.log('ok');
