@@ -4,6 +4,7 @@ const vm = require('node:vm');
 
 let tick, player, reply, requested;
 let autoplayBlocked = false;
+const warnings = [];
 
 // The open post: a popup whose header has the poster's picture next to a name column, plus a date link.
 const placed = []; // [where, label] for every label the script inserted
@@ -40,6 +41,7 @@ globalThis.Audio = class {
   }
   pause() { this.paused = true; }
 };
+console.warn = (...args) => warnings.push(args.join(' '));
 vm.runInThisContext(require('node:fs').readFileSync(`${__dirname}/music.js`, 'utf8'));
 
 const post = (asset, consumption, username = 'poster') => ({
@@ -130,6 +132,12 @@ const open = async path => {
   reply = post(full, { should_mute_audio: true });
   await open('/p/MutedSong01/');
   assert.equal(player.paused, true);
+
+  // An API refusal gets reported instead of passing for a post without a song.
+  reply = { message: 'login_required' };
+  await open('/p/ApiRefused1/');
+  assert.equal(player.paused, true);
+  assert.match(warnings.join('\n'), /login_required/);
 
   console.log('ok');
 })();

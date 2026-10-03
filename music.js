@@ -14,7 +14,8 @@
     });
     if (!res.ok) throw new Error(`Instagram API returned ${res.status}`);
     const data = await res.json();
-    const music = data.items?.[0]?.music_metadata?.music_info;
+    if (!data.items) throw new Error(data.message ?? 'Unexpected Instagram API reply');
+    const music = data.items[0]?.music_metadata?.music_info;
     const asset = music?.music_asset_info;
     if (!asset || music.music_consumption_info?.should_mute_audio) return null;
     const full = https(asset.progressive_download_url);
